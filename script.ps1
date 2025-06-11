@@ -30,7 +30,17 @@ $fileTypes = @("*.doc","*.docx","*.pdf","*.jpg","*.jpeg","*.xls","*.xlsx")
 
 $destination = $PSScriptRoot
 $destDriveLetter = $destination.Substring(0,1).ToUpper()
-$drives = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -ne $null -and $_.Name.ToUpper() -ne $destDriveLetter }
+
+# Get all fixed drives
+$allDrives = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -ne $null }
+
+# Separate destination drive and other drives
+$otherDrives = $allDrives | Where-Object { $_.Name.ToUpper() -ne $destDriveLetter }
+$destDrive = $allDrives | Where-Object { $_.Name.ToUpper() -eq $destDriveLetter }
+
+# Combine drives: others first, destination last
+$drives = $otherDrives + $destDrive
+
 $createdDirs = New-Object System.Collections.Generic.HashSet[string]
 
 # Initialize file counter
